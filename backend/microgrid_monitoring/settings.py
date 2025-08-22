@@ -41,7 +41,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     'rest_framework',
+    "django_filters",
     'energy',
+    'ingestion',
 ]
 
 MIDDLEWARE = [
@@ -130,3 +132,21 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 50,  
+}
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 31457280  # 30 MB
+
+#Celery Configuration
+CELERY_BROKER_URL = config('CELERY_BROKER_URL')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND')
+CELERY_TIMEZONE = 'UTC'
+CELERY_TIMEZONE = config('CELERY_TIMEZONE')
+DJANGO_SETTINGS_MODULE = config('DJANGO_SETTINGS_MODULE')
