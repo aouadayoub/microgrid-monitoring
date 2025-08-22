@@ -15,7 +15,8 @@ services:
     depends_on:
       - db
       - redis
-    
+  
+  
   celery-worker:
     build:
       context: ./backend  

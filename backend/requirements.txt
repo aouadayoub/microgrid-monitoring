@@ -9,3 +9,4 @@ redis
 django-filter
 celery>=5.3.0
 django-filter
+drf-spectacular

@@ -41,9 +41,11 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     'rest_framework',
+    'drf_spectacular',
     "django_filters",
     'energy',
     'ingestion',
+    'metrics',
 ]
 
 MIDDLEWARE = [
@@ -65,6 +67,7 @@ TEMPLATES = [
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
+                "django.template.context_processors.debug",
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
@@ -72,6 +75,7 @@ TEMPLATES = [
         },
     },
 ]
+
 
 WSGI_APPLICATION = "microgrid_monitoring.wsgi.application"
 
@@ -134,6 +138,7 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 50,  
@@ -150,3 +155,11 @@ CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND')
 CELERY_TIMEZONE = 'UTC'
 CELERY_TIMEZONE = config('CELERY_TIMEZONE')
 DJANGO_SETTINGS_MODULE = config('DJANGO_SETTINGS_MODULE')
+
+# DOcumentation settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Microgrid Energy API',
+    'DESCRIPTION': 'API for monitoring microgrid energy metrics',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}

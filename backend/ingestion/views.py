@@ -10,6 +10,7 @@ from celery.result import AsyncResult
 from .serializers import CSVUploadSerializer, MicrogridDataSerializer
 from .models import MicrogridData
 from .tasks import process_csv_file
+from .filters import MicrogridDataFilter
 
 class SimpleCSVUploadAPIView(generics.CreateAPIView):
     serializer_class = CSVUploadSerializer
@@ -53,14 +54,52 @@ class MicrogridDataListView(generics.ListAPIView):
     queryset = MicrogridData.objects.all()
     serializer_class = MicrogridDataSerializer
     permission_classes = [IsAuthenticated]
-
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_fields = {
-        'timestamp': ['gte', 'lte'], 
-    }
-    ordering_fields = ['timestamp']
+    filterset_class = MicrogridDataFilter 
+    ordering_fields = '__all__'
     ordering = ['timestamp']
 
+class MicrogridDataDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET, PUT, PATCH, DELETE endpoint for a single microgrid data record.
+    """
+    queryset = MicrogridData.objects.all()
+    serializer_class = MicrogridDataSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class BulkDeleteMicrogridDataView(APIView):
+    """
+    DELETE endpoint to bulk delete microgrid data records based on filters.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request):
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        queryset = MicrogridData.objects.all()
+        
+        if start_date and end_date:
+            queryset = queryset.filter(timestamp__range=[start_date, end_date])
+        elif start_date:
+            queryset = queryset.filter(timestamp__gte=start_date)
+        elif end_date:
+            queryset = queryset.filter(timestamp__lte=end_date)
+        
+        # Count records to be deleted
+        count = queryset.count()
+        
+        # Delete the records
+        queryset.delete()
+        
+        return Response(
+            {
+                "message": f"Successfully deleted {count} records.",
+                "deleted_count": count
+            },
+            status=status.HTTP_200_OK
+        )
 
 
 class TaskStatusAPIView(APIView):
