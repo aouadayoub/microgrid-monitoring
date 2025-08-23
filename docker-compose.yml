@@ -1,36 +1,43 @@
 services:
+  # Backend Django + Gunicorn
   web:
     build:
-      context: ./backend  
+      context: ./backend
       dockerfile: Dockerfile
-    command: gunicorn microgrid_monitoring.wsgi:application --bind 0.0.0.0:8000
+    command: >
+      sh -c "python manage.py collectstatic --noinput &&
+             python manage.py migrate &&
+             gunicorn microgrid_monitoring.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       - ./backend:/app
       - static_volume:/app/staticfiles
       - csv_uploads:/app/csv_uploads
-    ports:
-      - "8000:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/health/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     env_file:
       - .env
     depends_on:
       - db
       - redis
-  
-  
+
+  # Celery worker
   celery-worker:
     build:
-      context: ./backend  
+      context: ./backend
       dockerfile: Dockerfile
     command: celery -A microgrid_monitoring worker --loglevel=info
     volumes:
       - ./backend:/app
       - csv_uploads:/app/csv_uploads
+    env_file: .env
     depends_on:
       - redis
       - web
-    env_file: .env
 
-
+  # Database
   db:
     image: postgres:15
     volumes:
@@ -39,16 +46,26 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  # Redis
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  # Nginx (serving frontend + proxy to backend)
   nginx:
-    image: nginx:alpine
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
       - "80:80"
     volumes:
@@ -56,8 +73,8 @@ services:
       - static_volume:/app/staticfiles
       - csv_uploads:/app/csv_uploads
     depends_on:
-      - web
-      - celery-worker
+      web:
+        condition: service_healthy
 
 volumes:
   postgres_data:
