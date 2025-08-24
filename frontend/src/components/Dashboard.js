@@ -9,12 +9,14 @@ import {
   FilterPanel 
 } from './index';
 import { useDashboardData } from '../hooks/useDashboardData';
+import Header from './Header';
 import './Dashboard.css';
 
 const Dashboard = () => {
   const [filters, setFilters] = useState({ startDate: '', endDate: '' });
   const [isAutoRefresh, setIsAutoRefresh] = useState(false);
   const [refreshInterval, setRefreshInterval] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview');
 
   const {
     kpiData,
@@ -42,146 +44,287 @@ const Dashboard = () => {
     setRefreshInterval(enabled ? intervalSeconds * 1000 : null);
   }, []);
 
-  const handleRetry = useCallback(() => {
-    clearError();
-    refreshData();
-  }, [refreshData, clearError]);
-
   useEffect(() => {
-    console.log('Dashboard state:', { kpiData, timeSeriesData, loading, error, dataStats });
-  }, [kpiData, timeSeriesData, loading, error, dataStats]);
+    if (isAutoRefresh) {
+      const intervalId = setInterval(() => {
+        refreshData();
+      }, refreshInterval);
+      return () => clearInterval(intervalId);
+    }
+  }, [isAutoRefresh, refreshInterval, refreshData]);
 
-  if (error && !kpiData) {
+  // Main rendering logic
+  if (loading && !kpiData) {
     return (
-      <div className="dashboard">
-        <div className="error-message">
-          <h2>❌ Erreur de chargement</h2>
-          <p>{error}</p>
-          <button onClick={handleRetry} className="retry-btn">🔄 Réessayer</button>
+      <div className="dashboard-container">
+        <div className="loading-state">
+          <div className="loading-spinner"></div>
+          <p>Chargement des données du microgrid...</p>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="dashboard">
-      {/* Header */}
-      <div className="dashboard-header">
-        <div className="dashboard-title">
-          <h1>⚡ Microgrid Monitoring</h1>
-          <p>Tableau de bord énergétique en temps réel</p>
-        </div>
-        <div className="dashboard-controls">
-          <button
-            className={`control-btn refresh-btn ${loading ? 'loading' : ''}`}
-            onClick={handleRefresh}
-            disabled={loading}
-            title="Actualiser les données"
-          >
-            <span className={`refresh-icon ${loading ? 'spinning' : ''}`}>🔄</span>
-            {loading ? 'Chargement...' : 'Actualiser'}
-          </button>
-          <button
-            className={`control-btn auto-refresh-btn ${isAutoRefresh ? 'active' : ''}`}
-            onClick={() => handleToggleAutoRefresh(!isAutoRefresh, 60)}
-            title={isAutoRefresh ? 'Désactiver le rafraîchissement automatique' : 'Activer le rafraîchissement automatique'}
-          >
-            <span className="auto-icon">{isAutoRefresh ? '⏸️' : '▶️'}</span>
-            {isAutoRefresh ? 'Auto: ON' : 'Auto: OFF'}
-          </button>
+  if (!kpiData) {
+    return (
+      <div className="dashboard-container">
+        <div className="no-data-state fade-in">
+          <h3>📊 Aucune donnée disponible</h3>
+          <p>Aucune donnée n'a été trouvée pour la période sélectionnée.</p>
+          <a href="/upload" className="cta-btn">
+            Importer un fichier CSV
+          </a>
         </div>
       </div>
+    );
+  }
+  
+  return (
+    <div className="dashboard-container">
+      {/* Dashboard Header */}
+      <div className="dashboard-header fade-in">
+        <h2>Tableau de Bord Microgrid</h2>
+        <p>Aperçu des performances énergétiques</p>
+      </div>
 
-      {/* Status */}
-      {lastUpdate && (
-        <div className="status-info">
-          <small>
-            Dernière mise à jour: {lastUpdate.toLocaleString('fr-FR')}
-            {dataStats.hasTimeSeries && ` • ${dataStats.timeSeriesCount} points de données`}
-          </small>
-        </div>
-      )}
-
-      {/* Error Banner */}
-      {error && kpiData && (
-        <div className="error-banner">
-          ⚠️ {error} (Affichage des dernières données disponibles)
-          <button onClick={clearError} className="close-error">✕</button>
-        </div>
-      )}
-
-      {/* Filters */}
-      <FilterPanel filters={filters} onChange={handleFiltersChange} loading={loading} />
-
-      {/* Content */}
       <div className="dashboard-content">
-        {kpiData && <div className="kpi-section"><KPICards data={kpiData} /></div>}
+        {/* Filters and Controls */}
+        <FilterPanel 
+          filters={filters} 
+          onChange={handleFiltersChange} 
+          loading={loading} 
+          onRefresh={handleRefresh}
+          onToggleAutoRefresh={handleToggleAutoRefresh}
+          isAutoRefresh={isAutoRefresh}
+        />
 
-        <div className="charts-grid">
-          <div className="chart-section">
-            <h2>📊 Production d'Énergie</h2>
-            <ProductionChart data={kpiData} timeSeriesData={timeSeriesData} />
-          </div>
-          <div className="chart-section">
-            <h2>⚡ Consommation d'Énergie</h2>
-            <ConsumptionChart data={kpiData} timeSeriesData={timeSeriesData} />
-          </div>
-          <div className="chart-section">
-            <h2>🔄 Distribution de Puissance</h2>
-            <PowerDistributionChart data={kpiData} />
-          </div>
-          <div className="chart-section">
-            <h2>⚡ Métriques Électriques</h2>
-            <ElectricalMetrics data={kpiData} />
-          </div>
+        {/* Dashboard Navigation Tabs */}
+        <div className="dashboard-tabs">
+          <button 
+            className={`tab-button ${activeTab === 'overview' ? 'active' : ''}`}
+            onClick={() => setActiveTab('overview')}
+          >
+            Vue d'ensemble
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'production' ? 'active' : ''}`}
+            onClick={() => setActiveTab('production')}
+          >
+            Production
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'consumption' ? 'active' : ''}`}
+            onClick={() => setActiveTab('consumption')}
+          >
+            Consommation
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'electrical' ? 'active' : ''}`}
+            onClick={() => setActiveTab('electrical')}
+          >
+            Métriques Électriques
+          </button>
         </div>
 
-        {/* Data Quality */}
-        {dataStats && (
-          <div className="data-quality-info">
-            <h3>📈 Qualité des Données</h3>
-            <div className="quality-metrics">
-              <div className="quality-item">
-                <span className="quality-label">KPIs disponibles:</span>
-                <span className={`quality-status ${dataStats.hasKPIs ? 'good' : 'error'}`}>
-                  {dataStats.hasKPIs ? '✅ Oui' : '❌ Non'}
-                </span>
-              </div>
-              <div className="quality-item">
-                <span className="quality-label">Données temporelles:</span>
-                <span className={`quality-status ${dataStats.hasTimeSeries ? 'good' : 'warning'}`}>
-                  {dataStats.hasTimeSeries ? `✅ ${dataStats.timeSeriesCount} points` : '⚠️ Aucune'}
-                </span>
-              </div>
-              {dataStats.lastUpdateTime && (
-                <div className="quality-item">
-                  <span className="quality-label">Dernière actualisation:</span>
-                  <span className="quality-time">{dataStats.lastUpdateTime.toLocaleString('fr-FR')}</span>
-                </div>
+        {/* Dashboard Sections */}
+        {activeTab === 'overview' && (
+          <div className="dashboard-grid">
+            {/* KPI Section */}
+            <div className="kpi-section fade-in">
+              {kpiData && (
+                <>
+                  <div className="kpi-card">
+                    <h3>Production Totale</h3>
+                    <p>{kpiData.production_totale ? kpiData.production_totale.toFixed(2) : '0.00'} kWh</p>
+                  </div>
+                  <div className="kpi-card">
+                    <h3>Consommation Totale</h3>
+                    <p>{kpiData.consommation_totale ? kpiData.consommation_totale.toFixed(2) : '0.00'} kWh</p>
+                  </div>
+                  <div className="kpi-card">
+                    <h3>Taux d'Autonomie</h3>
+                    <p>{kpiData.autonomie ? kpiData.autonomie.toFixed(1) : '0.0'}%</p>
+                  </div>
+                  <div className="kpi-card">
+                    <h3>Sources Renouvelables</h3>
+                    <p>{kpiData.ratio_renewables ? kpiData.ratio_renewables.toFixed(1) : '0.0'}%</p>
+                  </div>
+                </>
               )}
+            </div>
+
+            {/* Production Chart */}
+            <div className="dashboard-card fade-in">
+              <h3>Répartition de la Production</h3>
+              <ProductionChart data={kpiData} timeSeriesData={timeSeriesData} />
+            </div>
+
+            {/* Consumption Chart */}
+            <div className="dashboard-card fade-in">
+              <h3>Analyse Consommation</h3>
+              <ConsumptionChart data={kpiData} timeSeriesData={timeSeriesData} />
+            </div>
+
+            {/* Power Distribution Chart */}
+            <div className="dashboard-card fade-in">
+              <h3>Distribution de Puissance</h3>
+              <PowerDistributionChart data={kpiData} />
             </div>
           </div>
         )}
 
-        {/* Loading & No Data */}
-        {loading && !kpiData && (
-          <div className="loading-state">
-            <div className="loading-spinner"></div>
-            <p>Chargement des données du microgrid...</p>
+        {activeTab === 'production' && (
+          <div className="dashboard-grid">
+            <div className="dashboard-card full-width">
+              <h3>Détails de la Production</h3>
+              <ProductionChart data={kpiData} timeSeriesData={timeSeriesData} />
+            </div>
+            
+            <div className="dashboard-card">
+              <h3>Production par Source</h3>
+              <PowerDistributionChart data={kpiData} />
+            </div>
+            
+            <div className="dashboard-card">
+              <h3>Performances de Production</h3>
+              <div className="performance-metrics">
+                <div className="metric">
+                  <span className="metric-label">Efficacité Globale</span>
+                  <span className="metric-value">
+                    {kpiData.autonomie ? kpiData.autonomie.toFixed(1) : '0.0'}%
+                  </span>
+                </div>
+                <div className="metric">
+                  <span className="metric-label">Pic de Production</span>
+                  <span className="metric-value">
+                    {kpiData.pic_production ? kpiData.pic_production.toFixed(2) : '0.00'} kW
+                  </span>
+                </div>
+                <div className="metric">
+                  <span className="metric-label">Facteur de Charge</span>
+                  <span className="metric-value">
+                    {kpiData.pic_production > 0 ? 
+                      ((kpiData.production_totale || 0) / (kpiData.pic_production * 24) * 100).toFixed(1) : 
+                      '0.0'}%
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         )}
-        {!loading && !kpiData && !error && (
-          <div className="no-data-state">
-            <h3>📊 Aucune donnée disponible</h3>
-            <p>Aucune donnée n'a été trouvée pour la période sélectionnée.</p>
-            <button onClick={handleRefresh} className="control-btn refresh-btn">🔄 Réessayer</button>
-          </div>
-        )}
-      </div>
 
-      {/* Footer */}
-      <div className="dashboard-footer">
-        <p>Microgrid Monitoring System • Données actualisées {isAutoRefresh ? 'automatiquement' : 'manuellement'}</p>
+        {activeTab === 'consumption' && (
+          <div className="dashboard-grid">
+            <div className="dashboard-card full-width">
+              <h3>Détails de la Consommation</h3>
+              <ConsumptionChart data={kpiData} timeSeriesData={timeSeriesData} />
+            </div>
+            
+            <div className="dashboard-card">
+              <h3>Bilan Énergétique</h3>
+              <div className="energy-balance">
+                <div className="balance-item">
+                  <span className="balance-label">Production Totale</span>
+                  <span className="balance-value positive">
+                    +{kpiData.production_totale ? kpiData.production_totale.toFixed(2) : '0.00'} kWh
+                  </span>
+                </div>
+                <div className="balance-item">
+                  <span className="balance-label">Consommation Totale</span>
+                  <span className="balance-value negative">
+                    -{kpiData.consommation_totale ? kpiData.consommation_totale.toFixed(2) : '0.00'} kWh
+                  </span>
+                </div>
+                <div className="balance-divider"></div>
+                <div className="balance-item total">
+                  <span className="balance-label">Bilan Net</span>
+                  <span className={`balance-value ${(kpiData.production_totale - kpiData.consommation_totale) >= 0 ? 'positive' : 'negative'}`}>
+                    {(kpiData.production_totale - kpiData.consommation_totale).toFixed(2)} kWh
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="dashboard-card">
+              <h3>Efficacité Énergétique</h3>
+              <div className="efficiency-metrics">
+                <div className="efficiency-item">
+                  <span className="efficiency-label">Autonomie</span>
+                  <div className="efficiency-bar">
+                    <div 
+                      className="efficiency-fill"
+                      style={{ width: `${kpiData.autonomie || 0}%` }}
+                    ></div>
+                  </div>
+                  <span className="efficiency-value">{kpiData.autonomie ? kpiData.autonomie.toFixed(1) : '0.0'}%</span>
+                </div>
+                <div className="efficiency-item">
+                  <span className="efficiency-label">Renouvelable</span>
+                  <div className="efficiency-bar">
+                    <div 
+                      className="efficiency-fill renewable"
+                      style={{ width: `${kpiData.ratio_renewables || 0}%` }}
+                    ></div>
+                  </div>
+                  <span className="efficiency-value">{kpiData.ratio_renewables ? kpiData.ratio_renewables.toFixed(1) : '0.0'}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'electrical' && (
+          <div className="dashboard-grid">
+            <div className="dashboard-card full-width">
+              <h3>Métriques Électriques Détaillées</h3>
+              <ElectricalMetrics data={kpiData} />
+            </div>
+            
+            <div className="dashboard-card">
+              <h3>Qualité du Courant</h3>
+              <div className="quality-metrics">
+                <div className="quality-item">
+                  <span className="quality-label">Tension Moyenne</span>
+                  <span className="quality-value">
+                    {kpiData.voltage_moyen ? kpiData.voltage_moyen.toFixed(1) : 'N/A'} V
+                  </span>
+                  <div className={`quality-status ${kpiData.voltage_moyen >= 360 && kpiData.voltage_moyen <= 440 ? 'good' : 'warning'}`}>
+                    {kpiData.voltage_moyen >= 360 && kpiData.voltage_moyen <= 440 ? '✓ Bon' : '⚠ Hors plage'}
+                  </div>
+                </div>
+                <div className="quality-item">
+                  <span className="quality-label">Fréquence Moyenne</span>
+                  <span className="quality-value">
+                    {kpiData.frequence_moyenne ? kpiData.frequence_moyenne.toFixed(3) : 'N/A'} Hz
+                  </span>
+                  <div className={`quality-status ${kpiData.frequence_moyenne >= 49.5 && kpiData.frequence_moyenne <= 50.5 ? 'good' : 'warning'}`}>
+                    {kpiData.frequence_moyenne >= 49.5 && kpiData.frequence_moyenne <= 50.5 ? '✓ Bon' : '⚠ Hors plage'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Status Bar */}
+        <div className="dashboard-status-bar">
+          <div className="status-item">
+            <span className="status-label">Dernière mise à jour:</span>
+            <span className="status-value">{lastUpdate ? new Date(lastUpdate).toLocaleTimeString('fr-FR') : 'N/A'}</span>
+          </div>
+          <div className="status-item">
+            <span className="status-label">Auto-rafraîchissement:</span>
+            <span className={`status-value ${isAutoRefresh ? 'active' : 'inactive'}`}>
+              {isAutoRefresh ? 'Activé (60s)' : 'Désactivé'}
+            </span>
+          </div>
+          {error && (
+            <div className="status-item error">
+              <span className="status-label">Erreur:</span>
+              <span className="status-value">{error}</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

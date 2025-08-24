@@ -4,7 +4,7 @@ from django.utils import timezone
 from celery import shared_task
 from .models import MicrogridData
 
-@shared_task
+@shared_task(queue='ingestion')
 def process_csv_file(file_path, delimiter):
     """
     Celery task to process CSV file in the background.
@@ -82,7 +82,9 @@ def process_csv_file(file_path, delimiter):
                         total_skipped += 1
                         continue
                         
-                    ts_aware = timezone.make_aware(ts, timezone.get_current_timezone())
+                    # Fix: Convert pandas Timestamp to a naive Python datetime object
+                    # and then make it timezone-aware.
+                    ts_aware = timezone.make_aware(ts.to_pydatetime(), timezone.get_current_timezone())
 
                     def safe_float(val):
                         if pd.isna(val) or val == '':
@@ -133,7 +135,7 @@ def process_csv_file(file_path, delimiter):
             "total_rows": total_rows,
             "status": "completed"
         }
-    
+        
     except Exception as e:
         # Clean up the temporary file even if there's an error
         try:

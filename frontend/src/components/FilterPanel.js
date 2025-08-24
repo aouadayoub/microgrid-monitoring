@@ -1,8 +1,10 @@
+// src/components/FilterPanel.js
 import React, { useState } from 'react';
+import './FilterPanel.css';
 
-const FilterPanel = ({ filters, onChange, loading }) => {
+const FilterPanel = ({ filters, onChange, loading, onRefresh, onToggleAutoRefresh, isAutoRefresh }) => {
   const [localFilters, setLocalFilters] = useState(filters);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const handleInputChange = (field, value) => {
     const newFilters = { ...localFilters, [field]: value };
@@ -53,7 +55,7 @@ const FilterPanel = ({ filters, onChange, loading }) => {
     }
 
     const formatDate = (date) => {
-      return date.toISOString().slice(0, 16); // Format pour datetime-local
+      return date.toISOString().slice(0, 16); // Format for datetime-local
     };
 
     const newFilters = {
@@ -80,159 +82,183 @@ const FilterPanel = ({ filters, onChange, loading }) => {
   const hasActiveFilters = localFilters.startDate || localFilters.endDate;
 
   return (
-    <div className={`filter-panel ${isExpanded ? 'expanded' : 'collapsed'}`}>
-      <div className="filter-header" onClick={() => setIsExpanded(!isExpanded)}>
-        <div className="filter-title">
-          <span className="filter-icon">🔍</span>
-          <h3>Filtres de Période</h3>
-          {hasActiveFilters && !isExpanded && (
-            <span className="active-filters-indicator">
-              {localFilters.startDate && (
-                <span className="filter-badge">
-                  Début: {formatDateForDisplay(localFilters.startDate)}
-                </span>
-              )}
-              {localFilters.endDate && (
-                <span className="filter-badge">
-                  Fin: {formatDateForDisplay(localFilters.endDate)}
-                </span>
-              )}
-            </span>
-          )}
-        </div>
-        <button className="expand-button" type="button">
-          {isExpanded ? '▼' : '▶'}
-        </button>
-      </div>
-
-      {isExpanded && (
-        <div className="filter-content">
-          {/* Boutons de plages prédéfinies */}
-          <div className="preset-buttons">
-            <h4>Plages Rapides</h4>
-            <div className="preset-grid">
-              <button 
-                type="button"
-                className="preset-button"
-                onClick={() => getPresetDateRange('today')}
-                disabled={loading}
-              >
-                Aujourd'hui
-              </button>
-              <button 
-                type="button"
-                className="preset-button"
-                onClick={() => getPresetDateRange('yesterday')}
-                disabled={loading}
-              >
-                Hier
-              </button>
-              <button 
-                type="button"
-                className="preset-button"
-                onClick={() => getPresetDateRange('last7days')}
-                disabled={loading}
-              >
-                7 derniers jours
-              </button>
-              <button 
-                type="button"
-                className="preset-button"
-                onClick={() => getPresetDateRange('last30days')}
-                disabled={loading}
-              >
-                30 derniers jours
-              </button>
-              <button 
-                type="button"
-                className="preset-button"
-                onClick={() => getPresetDateRange('thisMonth')}
-                disabled={loading}
-              >
-                Ce mois
-              </button>
-              <button 
-                type="button"
-                className="preset-button"
-                onClick={() => getPresetDateRange('lastMonth')}
-                disabled={loading}
-              >
-                Mois dernier
-              </button>
-            </div>
-          </div>
-
-          {/* Sélection manuelle des dates */}
-          <div className="manual-date-selection">
-            <h4>Sélection Manuelle</h4>
-            <div className="date-inputs">
-              <div className="date-input-group">
-                <label htmlFor="start-date">Date de Début</label>
-                <input
-                  id="start-date"
-                  type="datetime-local"
-                  value={localFilters.startDate}
-                  onChange={(e) => handleInputChange('startDate', e.target.value)}
-                  disabled={loading}
-                  className="date-input"
-                />
-              </div>
-              
-              <div className="date-input-group">
-                <label htmlFor="end-date">Date de Fin</label>
-                <input
-                  id="end-date"
-                  type="datetime-local"
-                  value={localFilters.endDate}
-                  onChange={(e) => handleInputChange('endDate', e.target.value)}
-                  disabled={loading}
-                  className="date-input"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Boutons d'action */}
-          <div className="filter-actions">
-            <button
-              type="button"
-              className="action-button apply-button"
-              onClick={handleApplyFilters}
-              disabled={loading}
-            >
-              {loading ? 'Application...' : 'Appliquer Filtres'}
-            </button>
-            
-            <button
-              type="button"
-              className="action-button reset-button"
-              onClick={handleResetFilters}
-              disabled={loading}
-            >
-              Réinitialiser
-            </button>
-          </div>
-
-          {/* Information sur les filtres actifs */}
-          {hasActiveFilters && (
-            <div className="active-filters-info">
-              <h5>Filtres Actifs:</h5>
-              <div className="filter-summary">
+    <div className="filter-panel-container">
+      <div className="filter-panel">
+        <div className="filter-header" onClick={() => setIsExpanded(!isExpanded)}>
+          <div className="filter-title">
+            <span className="filter-icon">📅</span>
+            <h3>Filtres de Période</h3>
+            {hasActiveFilters && !isExpanded && (
+              <span className="active-filters-indicator">
                 {localFilters.startDate && (
-                  <div className="filter-item">
-                    <strong>Début:</strong> {formatDateForDisplay(localFilters.startDate)}
-                  </div>
+                  <span className="filter-badge">
+                    Début: {formatDateForDisplay(localFilters.startDate)}
+                  </span>
                 )}
                 {localFilters.endDate && (
-                  <div className="filter-item">
-                    <strong>Fin:</strong> {formatDateForDisplay(localFilters.endDate)}
-                  </div>
+                  <span className="filter-badge">
+                    Fin: {formatDateForDisplay(localFilters.endDate)}
+                  </span>
                 )}
+              </span>
+            )}
+          </div>
+          <button className="expand-button" type="button">
+            {isExpanded ? '▼' : '▶'}
+          </button>
+        </div>
+
+        {isExpanded && (
+          <div className="filter-content">
+            {/* Boutons de plages prédéfinies */}
+            <div className="preset-buttons">
+              <h4>Plages Rapides</h4>
+              <div className="preset-grid">
+                <button 
+                  type="button"
+                  className="preset-button"
+                  onClick={() => getPresetDateRange('today')}
+                  disabled={loading}
+                >
+                  Aujourd'hui
+                </button>
+                <button 
+                  type="button"
+                  className="preset-button"
+                  onClick={() => getPresetDateRange('yesterday')}
+                  disabled={loading}
+                >
+                  Hier
+                </button>
+                <button 
+                  type="button"
+                  className="preset-button"
+                  onClick={() => getPresetDateRange('last7days')}
+                  disabled={loading}
+                >
+                  7 derniers jours
+                </button>
+                <button 
+                  type="button"
+                  className="preset-button"
+                  onClick={() => getPresetDateRange('last30days')}
+                  disabled={loading}
+                >
+                  30 derniers jours
+                </button>
+                <button 
+                  type="button"
+                  className="preset-button"
+                  onClick={() => getPresetDateRange('thisMonth')}
+                  disabled={loading}
+                >
+                  Ce mois
+                </button>
+                <button 
+                  type="button"
+                  className="preset-button"
+                  onClick={() => getPresetDateRange('lastMonth')}
+                  disabled={loading}
+                >
+                  Mois dernier
+                </button>
               </div>
             </div>
-          )}
-        </div>
-      )}
+
+            {/* Sélection manuelle des dates */}
+            <div className="manual-date-selection">
+              <h4>Sélection Manuelle</h4>
+              <div className="date-inputs">
+                <div className="date-input-group">
+                  <label htmlFor="start-date">Date de Début</label>
+                  <input
+                    id="start-date"
+                    type="datetime-local"
+                    value={localFilters.startDate}
+                    onChange={(e) => handleInputChange('startDate', e.target.value)}
+                    disabled={loading}
+                    className="date-input"
+                  />
+                </div>
+                
+                <div className="date-input-group">
+                  <label htmlFor="end-date">Date de Fin</label>
+                  <input
+                    id="end-date"
+                    type="datetime-local"
+                    value={localFilters.endDate}
+                    onChange={(e) => handleInputChange('endDate', e.target.value)}
+                    disabled={loading}
+                    className="date-input"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Boutons d'action */}
+            <div className="filter-actions">
+              <button
+                type="button"
+                className="action-button apply-button"
+                onClick={handleApplyFilters}
+                disabled={loading}
+              >
+                {loading ? 'Application...' : 'Appliquer Filtres'}
+              </button>
+              
+              <button
+                type="button"
+                className="action-button reset-button"
+                onClick={handleResetFilters}
+                disabled={loading}
+              >
+                Réinitialiser
+              </button>
+            </div>
+
+            {/* Information sur les filtres actifs */}
+            {hasActiveFilters && (
+              <div className="active-filters-info">
+                <h5>Filtres Actifs:</h5>
+                <div className="filter-summary">
+                  {localFilters.startDate && (
+                    <div className="filter-item">
+                      <strong>Début:</strong> {formatDateForDisplay(localFilters.startDate)}
+                    </div>
+                  )}
+                  {localFilters.endDate && (
+                    <div className="filter-item">
+                      <strong>Fin:</strong> {formatDateForDisplay(localFilters.endDate)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Refresh Controls */}
+      <div className="refresh-controls">
+        <button
+          className={`refresh-button ${loading ? 'loading' : ''}`}
+          onClick={onRefresh}
+          disabled={loading}
+          title="Actualiser les données"
+        >
+          <span className={`refresh-icon ${loading ? 'spinning' : ''}`}>🔄</span>
+          {loading ? 'Chargement...' : 'Actualiser'}
+        </button>
+
+        <button
+          className={`auto-refresh-button ${isAutoRefresh ? 'active' : ''}`}
+          onClick={() => onToggleAutoRefresh(!isAutoRefresh, 60)}
+          title={isAutoRefresh ? 'Désactiver le rafraîchissement automatique' : 'Activer le rafraîchissement automatique'}
+        >
+          <span className="auto-icon">{isAutoRefresh ? '⏸️' : '▶️'}</span>
+          {isAutoRefresh ? 'Auto: ON' : 'Auto: OFF'}
+        </button>
+      </div>
     </div>
   );
 };

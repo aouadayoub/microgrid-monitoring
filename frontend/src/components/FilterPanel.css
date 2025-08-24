@@ -1,0 +1,308 @@
+/* src/components/FilterPanel.css */
+.filter-panel-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.filter-panel {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  cursor: pointer;
+  background: linear-gradient(45deg, #4a69bd, #6a89cc);
+  color: white;
+}
+
+.filter-title {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.filter-icon {
+  font-size: 1.5rem;
+}
+
+.filter-title h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.active-filters-indicator {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: 1rem;
+}
+
+.filter-badge {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.3rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.expand-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.expand-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.filter-content {
+  padding: 1.5rem;
+}
+
+.preset-buttons h4,
+.manual-date-selection h4 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.preset-button {
+  padding: 0.8rem;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.preset-button:hover:not(:disabled) {
+  background: #e9ecef;
+  transform: translateY(-2px);
+}
+
+.preset-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.date-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.date-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.date-input-group label {
+  font-weight: 600;
+  color: #5a6c7d;
+  font-size: 0.9rem;
+}
+
+.date-input {
+  padding: 0.8rem;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #4a69bd;
+  box-shadow: 0 0 0 3px rgba(74, 105, 189, 0.1);
+}
+
+.date-input:disabled {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.action-button {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.apply-button {
+  background: linear-gradient(45deg, #4a69bd, #6a89cc);
+  color: white;
+}
+
+.apply-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 105, 189, 0.3);
+}
+
+.apply-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.reset-button {
+  background: #f8f9fa;
+  color: #5a6c7d;
+  border: 1px solid #e9ecef;
+}
+
+.reset-button:hover:not(:disabled) {
+  background: #e9ecef;
+}
+
+.reset-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.active-filters-info {
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #4a69bd;
+}
+
+.active-filters-info h5 {
+  margin: 0 0 0.5rem 0;
+  color: #2c3e50;
+  font-size: 0.9rem;
+}
+
+.filter-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.filter-item {
+  font-size: 0.9rem;
+  color: #5a6c7d;
+}
+
+.filter-item strong {
+  color: #2c3e50;
+}
+
+.refresh-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.refresh-button,
+.auto-refresh-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.refresh-button {
+  background: linear-gradient(45deg, #27ae60, #2ecc71);
+  color: white;
+}
+
+.refresh-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+}
+
+.refresh-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auto-refresh-button {
+  background: #f8f9fa;
+  color: #5a6c7d;
+  border: 1px solid #e9ecef;
+}
+
+.auto-refresh-button.active {
+  background: linear-gradient(45deg, #f39c12, #f1c40f);
+  color: white;
+  border: none;
+}
+
+.auto-refresh-button:hover:not(:disabled) {
+  background: #e9ecef;
+}
+
+.auto-refresh-button.active:hover:not(:disabled) {
+  background: linear-gradient(45deg, #e67e22, #f39c12);
+}
+
+.refresh-icon.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .filter-panel-container {
+    flex-direction: column;
+  }
+  
+  .preset-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .date-inputs {
+    grid-template-columns: 1fr;
+  }
+  
+  .filter-actions {
+    flex-direction: column;
+  }
+  
+  .refresh-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
