@@ -59,49 +59,39 @@ def generate_report_task(self, report_id):
         kpis = calculate_kpis(data)
 
         # --- Format-specific generation ---
+        generated_file_path = None
         if config.format == "pdf":
-            file_path = generate_pdf_report(config, kpis, data, start_date, end_date)
+            generated_file_path = generate_pdf_report(config, kpis, data, start_date, end_date)
         elif config.format == "md":
-            file_path = generate_markdown_report(config, kpis, data, start_date, end_date)
+            generated_file_path = generate_markdown_report(config, kpis, data, start_date, end_date)
         elif config.format == "csv":
-            file_path = generate_csv_report(config, kpis, data, start_date, end_date)
+            generated_file_path = generate_csv_report(config, kpis, data, start_date, end_date)
         else:
             raise ValueError(f"Unsupported report format: {config.format}")
 
-        # --- Mark as completed ---
-        report.file.name = file_path
-        report.status = "completed"
-        report.completed_at = timezone.now()
-        report.save()
-
-        logger.info(f"✅ Successfully generated report {report_id}")
+        if generated_file_path:
+            report.file.name = generated_file_path
+            report.status = "completed"
+            report.completed_at = timezone.now()
+            report.save()
+            logger.info(f"✅ Successfully generated report {report_id} as {config.format}")
+        else:
+            raise Exception("Report generation failed to produce a file path.")
 
     except Exception as exc:
         logger.error(
             f"❌ Error generating report {report_id}: {exc}\n{traceback.format_exc()}"
         )
-
         try:
             report = GeneratedReport.objects.get(id=report_id)
-            report.status = "retrying"
+            report.status = "failed"  # Set to failed
             report.error_message = str(exc)
+            report.completed_at = timezone.now() # Mark completion time even on failure
             report.save()
         except Exception:
-            pass  # avoid secondary DB errors
-
-        try:
-            raise self.retry(exc=exc)
-        except MaxRetriesExceededError:
-            logger.critical(
-                f"🚨 Report generation failed after max retries for report {report_id}"
-            )
-            try:
-                report = GeneratedReport.objects.get(id=report_id)
-                report.status = "failed"
-                report.error_message = f"Max retries exceeded: {str(exc)}"
-                report.save()
-            except Exception:
-                pass
+            pass
+        # Let Celery's built-in retry mechanism handle retries.
+        # If max_retries are exceeded, Celery will mark the task as FAILED.
 
 
 # ---------------------------------------------------------------------

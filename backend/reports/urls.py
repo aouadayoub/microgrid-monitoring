@@ -34,7 +34,7 @@ urlpatterns = [
         name="report-generation",
     ),
     path(
-        "download/<str:report_type>/<str:format_type>/",
+        "download/",
         DownloadReportView.as_view(),
         name="download-report",
     ),

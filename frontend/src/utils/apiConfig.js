@@ -254,10 +254,10 @@ export const deleteGeneratedReport = async (reportId) => {
 };
 
 // Updated download function to match your URL pattern
-export const downloadReport = async (reportId, report_type, format_type) => {
+export const downloadReport = async (reportId) => {
   try {
     const response = await apiClient.get(
-      `/download/${report_type}/${format_type}/?report_id=${reportId}`, 
+      `/download/?report_id=${reportId}`, 
       {
         responseType: 'blob',
       }

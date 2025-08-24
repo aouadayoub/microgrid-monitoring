@@ -105,16 +105,16 @@ const ReportManager = () => {
     }
   };
 
-  const handleDownloadReport = async (reportId, reportName, reportType, formatType) => {
+  const handleDownloadReport = async (report) => {
     try {
-      const fileBlob = await downloadReport(reportId, reportType, formatType);
+      const fileBlob = await downloadReport(report.id);
       const url = window.URL.createObjectURL(new Blob([fileBlob]));
       const link = document.createElement('a');
       link.href = url;
       
       // Create a proper file name with extension
-      const extension = formatType === 'md' ? 'md' : formatType;
-      link.setAttribute('download', `${reportName}.${extension}`);
+      const extension = report.configuration.format === 'md' ? 'md' : report.configuration.format;
+      link.setAttribute('download', `${report.configuration.name}.${extension}`);
       
       document.body.appendChild(link);
       link.click();
@@ -382,12 +382,7 @@ const ReportManager = () => {
                           <>
                             <button
                               className="btn btn-primary btn-sm"
-                              onClick={() => handleDownloadReport(
-                                report.id, 
-                                report.configuration.name,
-                                report.configuration.report_type,
-                                report.configuration.format
-                              )}
+                              onClick={() => handleDownloadReport(report)}
                             >
                               Télécharger
                             </button>

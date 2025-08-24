@@ -1,0 +1,12 @@
+Report:,test-report2
+Period:,2022-11-01 to 2022-11-03
+Generated:,2025-08-24 18:43
+
+KPI,Value,Unit
+consommation_totale,555147.75,kWh
+production_totale,-93906.00,kWh
+autonomie,-16.92,%
+pertes,649053.75,kWh
+pic_consommation,248.80,kW
+pic_production,89.00,kW
+ratio_renewables,225.20,%
